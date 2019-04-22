@@ -70,7 +70,7 @@ dependencies {
     implementation("org.mariadb.jdbc:mariadb-java-client")
     implementation("org.influxdb:influxdb-java:2.14")
     implementation("org.jsoup:jsoup:1.9.2")
-    implementation("cn.webank.sso:sso-client:1.2.6")
+    implementation("com.alibaba:fastjson:1.2.4")
 
     implementation(lombok, logger, apache_commons)
 
