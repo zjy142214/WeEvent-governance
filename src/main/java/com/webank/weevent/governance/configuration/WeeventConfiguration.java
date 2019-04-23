@@ -2,10 +2,13 @@ package com.webank.weevent.governance.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.servlet.DispatcherServlet;
 
 import com.webank.weevent.governance.filter.XssFilter;
 
@@ -66,8 +69,16 @@ public class WeeventConfiguration {
         filterRegistrationBean.setFilter(new XssFilter());
         filterRegistrationBean.setOrder(1);
         filterRegistrationBean.setEnabled(true);
-        filterRegistrationBean.addUrlPatterns("/*");
+        filterRegistrationBean.addUrlPatterns("/weevent-governance/topic/*");
         return filterRegistrationBean;
+    }
+    
+    @Bean
+    public ServletRegistrationBean weeventGovernanceServletBean(WebApplicationContext wac) {
+        DispatcherServlet ds = new DispatcherServlet(wac);
+        ServletRegistrationBean bean = new ServletRegistrationBean(ds, "/weevent-governance/*");
+        bean.setName("weeventGovernance");
+        return bean;
     }
     
 }

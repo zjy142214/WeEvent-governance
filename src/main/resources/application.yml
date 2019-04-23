@@ -15,10 +15,11 @@ spring:
     encoding: 
       charset: UTF-8
       force: true
-  mvc: 
+  mvc:
+    static-path-pattern: /** 
     throw-exception-if-no-handler-found: true
   resources:
-    add-mappings: false
+    static-locations: classpath:/
 mybatis:
   mapperLocations: classpath:mappers/*.xml
   typeAliasesPackage: com.webank.weevent.governance.mapper
