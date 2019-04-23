@@ -14,7 +14,7 @@ Governance是一个的可支持事件治理、区块链节点分析、系统监�
 
 ### 快速入门
 - 部署服务
-    用户下载和部署服务操作，请参见[文档](https://weeventdoc.readthedocs.io/en/latest/));
+    用户下载和部署服务操作，请参见[文档](https://weeventdoc.readthedocs.io/zh_CN/latest/);
 
 - 体验管理端
     打开管理端，体验在线发布主题和查看主题。
