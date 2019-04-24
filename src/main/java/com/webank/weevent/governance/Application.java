@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * spring boot start test
+ * spring boot start class
  *
  * @since 2018/12/18
  */
