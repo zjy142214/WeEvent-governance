@@ -57,7 +57,7 @@ public class InitialDb{
         stat = conn.createStatement();  
            
         //create table topic_info  
-        stat.executeUpdate("create table if not exists topic_info (topic_name varchar(255) not null primary key,creater varchar(255))engine =Innodb default charset=utf8");  
+        stat.executeUpdate("create table if not exists topic_info (topic_name varchar(256) not null primary key,creater varchar(256))engine =Innodb default charset=utf8");  
            
         stat.close();  
         conn.close();  
