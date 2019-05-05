@@ -82,7 +82,7 @@ public class ConnectionManager {
    };
 
    /**
-    * 配置连接参数
+    * config connect parameter
     */
    RequestConfig requestConfig = RequestConfig.custom()
        .setConnectionRequestTimeout(CONNECTION_REQUEST_TIMEOUT)
