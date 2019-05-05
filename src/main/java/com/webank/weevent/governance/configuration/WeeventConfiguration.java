@@ -10,7 +10,6 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import com.webank.weevent.governance.filter.HttpForwardFilter;
 import com.webank.weevent.governance.filter.XssFilter;
@@ -69,9 +68,9 @@ public class WeeventConfiguration {
     }
     
     @Bean
-    public ServletRegistrationBean weeventGovernanceServletBean(WebApplicationContext wac) {
+    public ServletRegistrationBean<DispatcherServlet> weeventGovernanceServletBean(WebApplicationContext wac) {
         DispatcherServlet ds = new DispatcherServlet(wac);
-        ServletRegistrationBean bean = new ServletRegistrationBean(ds, "/weevent-governance/*");
+        ServletRegistrationBean<DispatcherServlet> bean = new ServletRegistrationBean<>(ds, "/weevent-governance/*");
         bean.setName("weeventGovernance");
         return bean;
     }

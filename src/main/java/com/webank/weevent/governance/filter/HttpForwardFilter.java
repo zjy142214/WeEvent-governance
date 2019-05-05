@@ -50,6 +50,9 @@ public class HttpForwardFilter implements Filter{
 	@Autowired
 	CloseableHttpClient httpClient;
 	
+	@Autowired
+	CloseableHttpClient httpsClient;
+	
 	@Value("${weevent.url}")
     private String url;
 
@@ -73,15 +76,24 @@ public class HttpForwardFilter implements Filter{
 		
 		CloseableHttpResponse closeResponse = null;
 		if(req.getMethod().equals("GET")) {
-			HttpGet get = getMethod(newUrl,req);    //创建get请求
-			closeResponse = httpClient.execute(get);   //执行get请求
+			HttpGet get = getMethod(newUrl,req);    
+			if(newUrl.startsWith("https")) {
+				closeResponse = httpsClient.execute(get);
+			}else {
+				closeResponse = httpClient.execute(get);   
+			}
+			
 		}else {
 			HttpPost postMethod = postMethod(newUrl, req);
-			closeResponse = httpClient.execute(postMethod);
+			if(newUrl.startsWith("https")) {
+				closeResponse = httpsClient.execute(postMethod);
+			}else {
+				closeResponse = httpClient.execute(postMethod);   
+			}
 		}
 		String mes = EntityUtils.toString(closeResponse.getEntity()); 
 		log.info("response: " +mes);
-		Header encode = closeResponse.getFirstHeader("Content-Type");  //请求头，要返回content-type，以便前台知道如何处理
+		Header encode = closeResponse.getFirstHeader("Content-Type");  
         res.setHeader(encode.getName(), encode.getValue());
         ServletOutputStream out = response.getOutputStream();
 	    out.write(mes.getBytes());
@@ -90,18 +102,13 @@ public class HttpForwardFilter implements Filter{
 	}
 	
 	/**
-	 * 返回get方法 填充前台传送来的参数
+	 * return HttpGet 
 	 *
-	 * @param uri 要请求的接口地址
-	 * @param request 前台请求过来后 controller层请求对象
-	 * @author piper
-	 * @data 2018/7/3 11:19
 	 */
 	HttpGet getMethod(String uri, HttpServletRequest request) {
 	    try {
 	        URIBuilder builder = new URIBuilder(uri);
 	        Enumeration<String> enumeration = request.getParameterNames();
-	        //将前台的参数放到我的请求里面
 	        while (enumeration.hasMoreElements()) {
 	            String nex = enumeration.nextElement();
 	            builder.setParameter(nex, request.getParameter(nex));
@@ -113,20 +120,12 @@ public class HttpForwardFilter implements Filter{
 	    return null;
 	}
 	
-	/**
-	* 返回post方法
-	 *
-	 * @param uri 要请求的地址
-	 * @param request 前台请求对象
-	 * @author piper
-	 * @data 2018/7/3 11:19
-	 */
 	HttpPost postMethod(String uri, HttpServletRequest request) {
 	    StringEntity entity = null;
 	    if (request.getContentType().contains("json")) {
-	        entity = jsonData(request);  //填充json数据
+	        entity = jsonData(request);  
 	    } else {
-	        entity = formData(request);  //填充form数据
+	        entity = formData(request);  
 	    }
 	    HttpPost httpPost = new HttpPost(uri);
 	    httpPost.setHeader("Content-Type", request.getHeader("Content-Type"));
@@ -134,23 +133,16 @@ public class HttpForwardFilter implements Filter{
 	    return httpPost;
 	}
 	
-	/**
-	 * 处理post请求 form数据 填充form数据
-	 *
-	 * @param request 前台请求
-	 * @author piper
-	 * @data 2018/7/17 18:05
-	 */
 	public UrlEncodedFormEntity formData(HttpServletRequest request) {
 	    UrlEncodedFormEntity urlEncodedFormEntity = null;
 	    try {
-	        List<NameValuePair> pairs = new ArrayList<>();  //存储参数
-	        Enumeration<String> params = request.getParameterNames();  //获取前台传来的参数
+	        List<NameValuePair> pairs = new ArrayList<>();  
+	        Enumeration<String> params = request.getParameterNames();  
 	        while (params.hasMoreElements()) {
 	            String name = params.nextElement();
 	            pairs.add(new BasicNameValuePair(name, request.getParameter(name)));
 	        }
-	        //根据参数创建参数体，以便放到post方法中
+	       
 	        urlEncodedFormEntity = new UrlEncodedFormEntity(pairs, request.getCharacterEncoding());
 	    } catch (UnsupportedEncodingException e) {
 	        e.printStackTrace();
@@ -158,25 +150,16 @@ public class HttpForwardFilter implements Filter{
 	    return urlEncodedFormEntity;
 	}
 	
-	/**
-	 * 处理post请求 json数据
-	 *
-	 * @param request 前台请求
-	 * @author piper
-	 * @data 2018/7/17 18:05
-	 */
 	public StringEntity jsonData(HttpServletRequest request) {
 	    InputStreamReader is = null;
 	    try {
 	        is = new InputStreamReader(request.getInputStream(), request.getCharacterEncoding());
 	        BufferedReader reader = new BufferedReader(is);
-	        //将json数据放到String中
 	        StringBuilder sb = new StringBuilder();
 	        String line = null;
 	        while ((line = reader.readLine()) != null) {
 	            sb.append(line);
 	        }
-	        //根据json数据创建请求体
 	        return new StringEntity(sb.toString(), request.getCharacterEncoding()); 
 	    } catch (IOException e) {
 	        e.printStackTrace();
@@ -190,22 +173,15 @@ public class HttpForwardFilter implements Filter{
 	    return null;
 	}
 	
-	/**
-	 * 处理返回文件
-	 * 
-	 * @param response 前台页面的响应
-	 * @param closeableHttpResponse  httpclient请求过后返回数据
-	 * @date 2018/04/29 
-	 */
 	public void fileHandle(HttpServletResponse response, CloseableHttpResponse closeableHttpResponse) {
 	    ServletOutputStream out = null;
 	    try {
-	        Header encode = closeableHttpResponse.getFirstHeader("Content-Type");  //请求头，要返回content-type，以便前台知道如何处理
+	        Header encode = closeableHttpResponse.getFirstHeader("Content-Type");  
 	        response.setHeader(encode.getName(), encode.getValue());
-	        HttpEntity entity = closeableHttpResponse.getEntity();  //取出返回体
+	        HttpEntity entity = closeableHttpResponse.getEntity();  
 	        
-	        out = response.getOutputStream();  //得到给前台的响应流
-	        entity.writeTo(out);  //将返回体通过响应流写到前台
+	        out = response.getOutputStream();  
+	        entity.writeTo(out);  
 	        out.flush();
 	    } catch (IOException e) {
 	        e.printStackTrace();

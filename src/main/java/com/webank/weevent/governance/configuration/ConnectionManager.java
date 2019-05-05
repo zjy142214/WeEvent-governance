@@ -2,15 +2,27 @@ package com.webank.weevent.governance.configuration;
 
 import java.io.InterruptedIOException;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -18,29 +30,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * http连接池配置
- * @author piper
- * @date 2018/7/4 13:15
+ * http connect pool cofigure
+ * @date 2018/04/30
  */
 @Configuration
 public class ConnectionManager {
 
-   // 最大连接数
+   // max connect
    private static final int MAX_TOTAL = 200;
-   // 每一个路由的最大连接数
    private static final int MAX_PER_ROUTE = 500;
-   //从连接池中获得连接的超时时间
    private static final int CONNECTION_REQUEST_TIMEOUT = 3000;
-   //连接超时
    private static final int CONNECTION_TIMEOUT = 3000;
-   //获取数据的超时时间
    private static final int SOCKET_TIMEOUT = 5000;
 
    private PoolingHttpClientConnectionManager cm;
    private CloseableHttpClient httpClient;
 
    /**
-    * 重连接策略
+    * reconnet str
     */
    HttpRequestRetryHandler retryHandler = (exception, executionCount,context) -> {
        if (executionCount >= 3) {
@@ -88,7 +95,6 @@ public class ConnectionManager {
        cm.setMaxTotal(MAX_TOTAL);
        cm.setDefaultMaxPerRoute(MAX_PER_ROUTE);
 
-       // 定制实现HttpClient，全局只有一个HttpClient
        httpClient = HttpClients.custom()
            .setConnectionManager(cm)
            .setDefaultRequestConfig(requestConfig)
@@ -96,10 +102,51 @@ public class ConnectionManager {
            .build();
    }
 
-   @Bean
+   @Bean("httpClient")
    public CloseableHttpClient getHttpClient() {
        return httpClient;
    }
 
+   @Bean("httpsClient")
+   public CloseableHttpClient getHttpsClient() {
+	   Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create().register("http", PlainConnectionSocketFactory.INSTANCE).register("https", trustAllHttpsCertificates()).build();
+		PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+		CloseableHttpClient httpsClient = HttpClients.custom().setConnectionManager(connectionManager).build();
+		return httpsClient;
+   }
+   
+   private  SSLConnectionSocketFactory trustAllHttpsCertificates() {
+		SSLConnectionSocketFactory socketFactory = null;
+		TrustManager[] trustAllCerts = new TrustManager[1];
+		TrustManager tm = new miTM();
+		trustAllCerts[0] = tm;
+		SSLContext sc = null;
+		try {
+			sc = SSLContext.getInstance("TLS");//sc = SSLContext.getInstance("TLS")
+			sc.init(null, trustAllCerts, null);
+			socketFactory = new SSLConnectionSocketFactory(sc, NoopHostnameVerifier.INSTANCE);
+			//HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (KeyManagementException e) {
+			e.printStackTrace();
+		}
+		return socketFactory;
+	}
+	
+	private class miTM implements TrustManager, X509TrustManager {
+		
+		public X509Certificate[] getAcceptedIssuers() {
+			return null;
+		}
+		
+		public void checkServerTrusted(X509Certificate[] certs, String authType) {
+			//don't check
+		}
+		
+		public void checkClientTrusted(X509Certificate[] certs, String authType) {
+			//don't check
+		}
+	}
 }
 

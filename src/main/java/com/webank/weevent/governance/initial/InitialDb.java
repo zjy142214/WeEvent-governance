@@ -55,10 +55,29 @@ public class InitialDb{
         conn.close();  
         conn = DriverManager.getConnection(goalUrl, user, password);    
         stat = conn.createStatement();  
+        
+        String sql = "create table if not exists t_broker(\n" + 
+        		"id int(11) NOT NULL auto_increment primary key,\n" + 
+        		"name varchar(256) not null,\n" + 
+        		"url varchar(256),\n" + 
+        		"last_update timestamp NOT NULL , \n" + 
+        		"key index_name (name)\n" + 
+        		")engine =Innodb default charset=utf8";
            
-        //create table topic_info  
-        stat.executeUpdate("create table if not exists topic_info (topic_name varchar(256) not null primary key,creater varchar(256))engine =Innodb default charset=utf8");  
-           
+        //create table t_broker  
+        stat.executeUpdate(sql);  
+        
+        sql = "create table if not exists t_topic(\n" + 
+        		"topic_name varchar(256) not null,\n" + 
+        		"creater varchar(256),\n" + 
+        		"broker_id int(11) not null,\n" + 
+        		"last_update timestamp NOT NULL , \n" + 
+        		"foreign key(broker_id) references t_broker(id),\n" + 
+        		"primary key id_topic (broker_id,topic_name)\n" + 
+        		")engine =Innodb default charset=utf8";
+        //create table t_topic
+        stat.executeUpdate(sql); 
+        
         stat.close();  
         conn.close();  
     }
